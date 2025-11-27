@@ -249,7 +249,7 @@ class PortalWebsite(http.Controller):
         domain = []
 
         if user.sales_man:
-            domain.append(('employee_id.user_id', '=', user.id)
+            domain.append(('employee_id.user_id', '=', user.id))
 
         # Filter for sales users (see orders where they are assigned as employee)
         if user.sale_leader:
