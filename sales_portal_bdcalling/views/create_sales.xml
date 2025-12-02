@@ -4,639 +4,398 @@
     <!-- Portal sales form, dashboard and update form
     Developed by Rufaida Jaman Rayta -->
     <!-- ___________________________________________________Order Create Form_____________________________________________________ -->
-   <template id="portal_quotation_form" name="Sales Form">
-    <t t-call="portal.portal_layout">
-        <t t-set="user" t-value="request.env.user" />
-        <t t-set="fin_not_count" t-value="0" />
+    <template id="portal_quotation_form" name="Sales Form">
+        <t t-call="portal.portal_layout">
+            <t t-set="user" t-value="request.env.user" />
+            <t t-set="fin_not_count" t-value="0" />
 
-        <t t-if="user.scm_department">
-            <t t-set="fin_not_count" t-value="request.env['bd.notification'].sudo().search_count([
+            <t t-if="user.scm_department">
+                <t t-set="fin_not_count" t-value="request.env['bd.notification'].sudo().search_count([
         ('department', '=', 'finance'),
         ('mark_as_read', '=', False),
         ])" />
-        </t>
+            </t>
 
-        <title>Sales Section</title>
+            <title>Sales Section</title>
 
-        <!-- Portal Styles & Odoo Brand Colors (Option B) -->
-        <style>
-            /* Odoo brand palette - Portal Style */
-            :root{
-                --odoo-primary: #714B67;
-                --odoo-primary-dark: #5a3952;
-                --odoo-muted: #876583;
-                --portal-bg: #FAFAFA;
-                --portal-surface: #ffffff;
-                --portal-border: #e9e7ea;
-                --portal-muted-text: #6c6c6c;
-                --portal-error: #D9534F;
-                --portal-success: #3c9a3c;
-            }
+            <!-- Bootstrap CSS -->
+            <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+            <link href="/sales_portal_bdcalling/static/css/create_sale.css?v=1" rel="stylesheet" />
 
-            /* Basic layout adjustments */
-            body .portal {
-                background: linear-gradient(0deg, #ffffff, #fff);
-            }
-            #add_sale { min-height: 70vh; }
+            <!-- Sidebar Overlay for Mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-            /* Sidebar */
-            .sidebar {
-                min-width: 220px;
-                max-width: 260px;
-                background: var(--portal-surface);
-                border-right: 1px solid var(--portal-border);
-            }
-
-            /* Header */
-            .navbar {
-                background: var(--portal-surface);
-                border-bottom: 1px solid var(--portal-border);
-            }
-            .navbar .h4 { color: var(--odoo-primary-dark); }
-
-            /* Section card */
-            .employee-details, .order-details {
-                background: var(--portal-bg);
-                border: 1px solid var(--portal-border);
-                padding: 18px;
-                border-radius: 12px;
-            }
-            .employee-details h2, .order-details h1 {
-                color: var(--odoo-primary-dark);
-                font-weight: 600;
-            }
-
-            /* Required label style (Odoo-like) */
-            label.required::after {
-                content: " *";
-                color: var(--portal-error);
-                margin-left: 2px;
-            }
-
-            /* Invalid input */
-            .is-invalid {
-                border-color: var(--portal-error) !important;
-                background-color: #fff5f5 !important;
-                box-shadow: 0 0 0 0.125rem rgba(217,83,79,0.08);
-            }
-
-            /* Invalid feedback */
-            .invalid-feedback {
-                color: var(--portal-error);
-                font-size: 13px;
-                margin-top: 6px;
-                display: none;
-            }
-            .invalid-feedback.show {
-                display: block;
-            }
-
-            /* Buttons */
-            .btn-dark {
-                background: var(--odoo-primary);
-                border-color: var(--odoo-primary);
-            }
-            .btn-dark:hover {
-                background: var(--odoo-primary-dark);
-                border-color: var(--odoo-primary-dark);
-            }
-
-            /* small helpers */
-            .search-results { z-index: 1050; }
-            .rounded { border-radius: 10px !important; }
-            .shadow-sm { box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; }
-
-            /* Responsive tweaks */
-            @media (max-width: 767px){
-                .sidebar { display: none; }
-                #sidebarOverlay.active { display: block; }
-            }
-        </style>
-
-        <!-- External libs (kept as in your original) -->
-        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
-        <link href="/sales_portal_bdcalling/static/css/create_sale.css?v=1" rel="stylesheet" />
-
-        <!-- Sidebar Overlay for Mobile -->
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()" style="display:none;"></div>
-
-        <div class="d-flex" id="add_sale">
-            <!-- Sidebar -->
-            <div class="sidebar d-flex flex-column bg-light border-right" id="sidebar">
-                <div class="text-center py-3" id="logoContainer" style="display: none;">
-                    <img src="/sales_portal_bdcalling/static/img/navigation-image-2.png" alt="Logo" class="img-fluid" style="max-width: 185px;" />
-                </div>
-                <ul class="nav flex-column pl-4 pt-4">
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/bdcalling/dashboard">
-                            <i class="fas fa-tachometer-alt"></i>
-                        Dashboard
-                        </a>
-                    </li>
-                    <t t-if="user.operation_man == False">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="/sale/dashboard">
-                                <i class="fas fa-chart-line"></i>
-                            Sales
-                            </a>
-                        </li>
-                    </t>
-                    <t t-if="not user.sale_leader and not user.sales_man">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="/operation_dashboard">
-                                <i class="fas fa-cogs"></i>
-                            Operation
-                            </a>
-                        </li>
-                    </t>
-                    <t t-if="not user.operation_man and not user.sales_man">
-                        <li class="nav-item ">
-                            <a class="nav-link text-dark" href="/portal/requisition/dashboard">
-                                <i class="fas fa-clipboard-list"></i>
-                            Requisition
-                            </a>
-                        </li>
-                    </t>
-                    <hr style="border: 1px solid #000; margin: 10px 0; width: 90%; background-color: #000;" />
-
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/web/session/logout">
-                            <i class="fas fa-sign-out-alt"></i>
-                        Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Main Content -->
-            <div class="flex-grow-1">
-                <nav class="navbar navbar-light bg-white border-bottom">
-                    <div class="container-fluid px-2">
-                        <div class="d-flex align-items-center w-100">
-
-                            <div class="d-flex align-items-center flex-grow-1 mx-2">
-                                <a href="javascript:void(0);" onclick="window.history.back();">
-                                    <img src="/sales_portal_bdcalling/static/img/header-icon-arrow-left.png" alt="" class="img-fluid" style="width: 20px; height: 20px;" />
-                                </a>
-                                <h1 class="h4 text-dark mb-0 ml-2">Create Order</h1>
-                            </div>
-
-                            <div class="d-flex align-items-center ml-auto">
-                                <div class="position-relative ml-3 mt-2">
-                                    <a href="/portal/notifications" class="text-decoration-none ">
-                                        <i class="far fa-bell text-muted" style="font-size: 24px;"></i>
-                                        <span class="position-absolute badge badge-danger rounded-circle" style="top: -5px; right: -5px; font-size: 10px; min-width: 18px; height: 18px; line-height: 14px; padding: 2px;" t-esc="fin_not_count if fin_not_count else '0'">0</span>
-                                    </a>
-                                </div>
-                            </div>
-                            <button class="navbar-toggler border-0 p-0 ml-3 d-md-none" type="button" onclick="toggleSidebar()">
-                                <span class="navbar-toggler-icon"></span>
-                            </button>
-                        </div>
+            <div class="d-flex" id="add_sale">
+                <!-- Sidebar -->
+                <div class="sidebar d-flex flex-column bg-light border-right" id="sidebar">
+                    <div class="text-center py-3" id="logoContainer" style="display: none;">
+                        <img src="/sales_portal_bdcalling/static/img/navigation-image-2.png" alt="Logo" class="img-fluid" style="max-width: 185px;" />
                     </div>
-                </nav>
+                    <ul class="nav flex-column pl-4 pt-4">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/bdcalling/dashboard">
+                                <i class="fas fa-tachometer-alt"></i>
+                            Dashboard
+                            </a>
+                        </li>
+                        <!-- <li class="nav-item">
+                            <a class="nav-link text-dark" href="/portal/to_do_list">
+                                <i class="fas fa-list-alt"></i>
+                            To-Do List
+                            </a>
+                        </li> -->
+                        <t t-if="user.operation_man == False">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="/sale/dashboard">
+                                    <i class="fas fa-chart-line"></i>
+                                Sales
+                                </a>
+                            </li>
+                        </t>
+                        <t t-if="not user.sale_leader and not user.sales_man">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="/operation_dashboard">
+                                    <i class="fas fa-cogs"></i>
+                                Operation
+                                </a>
+                            </li>
+                        </t>
+                        <t t-if="not user.operation_man and not user.sales_man">
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark" href="/portal/requisition/dashboard">
+                                    <i class="fas fa-clipboard-list"></i>
+                                Requisition
+                                </a>
+                            </li>
+                        </t>
+                        <hr style="border: 1px solid #000; margin: 10px 0; width: 90%; background-color: #000;" />
 
-                <div class="p-2 p-md-3">
-                    <div class="mt-4">
-                        <!-- Employee Details -->
-                        <div class="employee-details p-3 p-md-4 rounded shadow-sm mt-4">
-                            <h2 class="h5 mb-4">Employee Details</h2>
-                            <form>
-                                <div class="mb-3">
-                                    <label for="employee_id" class="form-label">Employee ID</label>
-                                    <input type="text" class="form-control" id="employee_id" t-att-value="employee.barcode or ''" placeholder="" readonly="1" />
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <div class="mb-3">
-                                            <label for="employee_name" class="form-label">Employee Name</label>
-                                            <input type="text" class="form-control" id="employee_name" t-att-value="employee.name or ''" placeholder="Md Saifullah Mamon" readonly="1" />
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="mb-3">
-                                            <label for="company_name" class="form-label">Company Name</label>
-                                            <input type="text" class="form-control" id="company_name" t-att-value="employee.company_id.name or ''" placeholder="Data Insight LLC" readonly="1" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/web/session/logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
-                        <!-- Sales Employee Details -->
-                        <div class="employee-details p-3 p-md-4 rounded shadow-sm mt-4">
-                            <h2 class="h5 mb-4">Sales Employee Details</h2>
-                            <form>
-                                <t t-if="user.sale_leader">
-                                    <div class="mb-3">
-                                        <label for="sales_employee_id" class="form-label">Sales Employee ID</label>
-                                        <input type="hidden" name="sales_employee_id_hidden" id="sales_employee_id_hidden" />
-                                        <input type="text" class="form-control" id="sales_employee_id" t-att-value="employee.barcode or ''" placeholder="" />
-                                    </div>
-                                </t>
-                                <t t-else="">
-                                    <div class="mb-3">
-                                        <label for="sales_employee_id" class="form-label">Sales Employee ID</label>
-                                        <input type="hidden" name="sales_employee_id_hidden" id="sales_employee_id_hidden" />
-                                        <input type="text" class="form-control" id="sales_employee_id" t-att-value="employee.barcode or ''" t-att-readonly="True" placeholder="" />
-                                    </div>
-                                </t>
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <div class="mb-3">
-                                            <label for="sales_employee_name" class="form-label">Sales Employee Name</label>
-                                            <input type="text" class="form-control" id="sales_employee_name" t-att-value="employee.name or ''" placeholder="Md Saifullah Mamon" readonly="1" />
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="mb-3">
-                                            <label for="sales_company_name" class="form-label">Company Name</label>
-                                            <input type="text" class="form-control" id="sales_company_name" t-att-value="employee.company_id.name or ''" placeholder="Data Insight LLC" readonly="1"/>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
+                <!-- Main Content -->
+                <div class="flex-grow-1">
+                    <nav class="navbar navbar-light bg-white border-bottom">
+                        <div class="container-fluid px-2">
+                            <div class="d-flex align-items-center w-100">
 
-                        <!-- Order Details -->
-                        <div class="order-details p-3 p-md-4 rounded shadow-sm mt-4">
-                            <h1 class="h5 mb-4">Order Details</h1>
-
-                            <!-- Main form -->
-                            <form id="sale_form" method="post" action="/portal/sale/create">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" />
-
-                                <div class="row mb-3">
-                                    <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
-                                        <label for="platform_source_id" class="form-label required">Platform Source</label>
-                                        <select class="form-control" name="platform_source_id" id="platform_source_id" data-required="1">
-                                            <option value="">Select Source...</option>
-                                            <t t-foreach="mediums" t-as="medium">
-                                                <option t-att-value="medium.id"><t t-esc="medium.name" /></option>
-                                            </t>
-                                        </select>
-                                        <div class="invalid-feedback" id="platform_source_id_error">This field is required.</div>
-                                    </div>
-
-                                    <div class="form-group col-12 col-md-6">
-                                        <label for="order_source_id" class="form-label required">Order Source</label>
-                                        <select class="form-control" name="order_source_id" id="order_source_id" data-required="1">
-                                            <option value="">Select Source...</option>
-                                            <t t-foreach="sources" t-as="source">
-                                                <option t-att-value="source.id"><t t-esc="source.name" /></option>
-                                            </t>
-                                        </select>
-                                        <div class="invalid-feedback" id="order_source_id_error">This field is required.</div>
-                                    </div>
+                                <div class="d-flex align-items-center flex-grow-1 mx-2">
+                                    <a href="javascript:void(0);" onclick="window.history.back();">
+                                        <img src="/sales_portal_bdcalling/static/img/header-icon-arrow-left.png" alt="" class="img-fluid" style="width: 20px; height: 20px;" />
+                                    </a>
+                                    <h1 class="h4 text-dark mb-0 ml-2">Create Order</h1>
                                 </div>
 
-                                <div class="row mb-3">
-                                    <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
-                                        <label for="profile_id" class="form-label required">Profile Name</label>
-                                        <select class="form-control" name="profile_id" id="profile_id" data-required="1">
-                                            <option value="">Select Profile...</option>
-                                            <t t-foreach="profiles" t-as="profile">
-                                                <option t-att-value="profile.id"><t t-esc="profile.name" /></option>
-                                            </t>
-                                        </select>
-                                        <div class="invalid-feedback" id="profile_id_error">This field is required.</div>
-                                    </div>
-
-                                    <div class="col-12 col-md-6">
-                                        <label class="col-form-label required" for="partner_id">Client Name</label>
-                                        <div class="input-group position-relative">
-                                            <input type="text" class="form-control search-input" data-model="res.partner" placeholder="Search partner..." id="partner_id" name="partner_id" autocomplete="off" data-required="1" />
-                                            <div class="search-results position-absolute w-100 bg-white shadow-sm border rounded-bottom mt-12" style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
-                                        </div>
-                                        <div class="invalid-feedback" id="partner_id_error">This field is required.</div>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
-                                        <label for="partner_email" class="form-label">Client Email</label>
-                                        <input type="email" class="form-control" id="partner_email" name="partner_email" />
-                                    </div>
-                                    <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
-                                        <label for="partner_phone" class="form-label">Client Phone</label>
-                                        <input type="text" class="form-control" id="partner_phone" name="partner_phone" />
-                                    </div>
-                                    <div class="col-12 mt-2">
-                                        <a href="/customer/form">
-                                            <button type="button" class="btn btn-dark">+ Add New Customer</button>
+                                <div class="d-flex align-items-center ml-auto">
+                                    <div class="position-relative ml-3 mt-2">
+                                        <a href="/portal/notifications" class="text-decoration-none ">
+                                            <i class="far fa-bell text-muted" style="font-size: 24px;"></i>
+                                            <span class="position-absolute badge badge-danger rounded-circle" style="top: -5px; right: -5px; font-size: 10px; min-width: 18px; height: 18px; line-height: 14px; padding: 2px;" t-esc="fin_not_count if fin_not_count else '0'">0</span>
                                         </a>
                                     </div>
                                 </div>
+                                <button class="navbar-toggler border-0 p-0 ml-3 d-md-none" type="button" onclick="toggleSidebar()">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
 
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                                        <label class="form-label required" for="order_number">Order Number</label>
-                                        <input type="text" class="form-control" placeholder="" id="order_number" name="order_number" data-required="1" />
-                                        <div class="invalid-feedback" id="order_number_error">This field is required.</div>
+                    <div class="p-2 p-md-3">
+                        <div class="mt-4">
+                            <div class="employee-details p-3 p-md-4 rounded shadow-sm mt-4" style="background: #FAFAFA;">
+                                <h2 class="h5 mb-4">Employee Details</h2>
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="employee_id" class="form-label">Employee ID</label>
+                                        <input type="text" class="form-control" id="employee_id" t-att-value="employee.barcode or ''" placeholder="" readonly="1" />
                                     </div>
-
-                                    <div class="form-group col-12 col-md-4 mb-3 mb-md-0">
-                                        <label for="team_id" class="form-label">Assign Team</label>
-                                        <select class="form-control" name="team_id" id="team_id">
-                                            <option value="">Select Team...</option>
-                                            <t t-foreach="team_id" t-as="team">
-                                                <option t-att-value="team.id"><t t-esc="team.name" /></option>
-                                            </t>
-                                        </select>
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <div class="mb-3">
+                                                <label for="employee_name" class="form-label">Employee Name</label>
+                                                <input type="text" class="form-control" id="employee_name" t-att-value="employee.name or ''" placeholder="Md Saifullah Mamon" readonly="1" />
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <div class="mb-3">
+                                                <label for="company_name" class="form-label">Company Name</label>
+                                                <input type="text" class="form-control" id="company_name" t-att-value="employee.company_id.name or ''" placeholder="Data Insight LLC" readonly="1" />
+                                            </div>
+                                        </div>
                                     </div>
+                                </form>
+                            </div>
+                            <div class="employee-details p-3 p-md-4 rounded shadow-sm mt-4" style="background: #FAFAFA;">
+                                <h2 class="h5 mb-4">Sales Employee Details</h2>
+                                <form>
+                                    <!-- <div class="mb-3">
+                                        <label for="sales_employee_id" class="form-label">Sales Employee ID</label>
+                                        <input type="hidden" name="sales_employee_id_hidden" id="sales_employee_id_hidden" />
+                                        <input type="text" class="form-control" id="sales_employee_id" t-att-value="employee.barcode or ''" placeholder="" readonly="1" />
+                                    </div> -->
+                                    <t t-if="user.sale_leader">
+                                        <div class="mb-3">
+                                            <label for="sales_employee_id" class="form-label">Sales Employee ID</label>
+                                            <input type="hidden" name="sales_employee_id_hidden" id="sales_employee_id_hidden" />
 
-                                    <div class="col-12 col-md-4">
-                                        <label class="form-label" for="order_link">Order Link</label>
-                                        <input type="url" class="form-control" placeholder="" id="order_link" name="order_link" />
-                                        <div class="invalid-feedback" id="order_link_error">This field is required.</div>
+                                            <input type="text" class="form-control" id="sales_employee_id" t-att-value="employee.barcode or ''" placeholder="" />
+                                        </div>
+                                    </t>
+
+                                    <t t-else="">
+                                        <div class="mb-3">
+                                            <label for="sales_employee_id" class="form-label">Sales Employee ID</label>
+                                            <input type="hidden" name="sales_employee_id_hidden" id="sales_employee_id_hidden" />
+
+                                            <input type="text" class="form-control" id="sales_employee_id" t-att-value="employee.barcode or ''" t-att-readonly="True" placeholder="" />
+                                        </div>
+                                    </t>
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <div class="mb-3">
+                                                <label for="sales_employee_name" class="form-label">Sales Employee Name</label>
+                                                <input type="text" class="form-control" id="sales_employee_name" t-att-value="employee.name or ''" placeholder="Md Saifullah Mamon" readonly="1" />
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <div class="mb-3">
+                                                <label for="sales_company_name" class="form-label">Company Name</label>
+                                                <input type="text" class="form-control" id="sales_company_name" t-att-value="employee.company_id.name or ''" placeholder="Data Insight LLC" readonly="1"/>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                </form>
+                            </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                                        <label class="form-label" for="instruction_sheet_link">Instruction Sheet Link</label>
-                                        <input type="url" class="form-control" placeholder="" id="instruction_sheet_link" name="instruction_sheet_link" />
-                                        <div class="invalid-feedback" id="instruction_sheet_link_error">This field is required.</div>
-                                    </div>
-
-                                    <div class="form-group col-12 col-md-4 mb-3 mb-md-0">
-                                        <label for="product_id" class="form-label required">Service Type</label>
-                                        <select class="form-control" name="product_id" id="product_id" data-required="1">
-                                            <option value="">Select Service Type...</option>
-                                            <t t-foreach="products" t-as="product">
-                                                <option t-att-value="product.id"><t t-esc="product.name" /></option>
-                                            </t>
-                                        </select>
-                                        <div class="invalid-feedback" id="product_id_error">This field is required.</div>
-                                    </div>
-
-                                    <div class="col-12 col-md-4">
-                                        <label class="form-label required" for="incoming_date">Incoming Date</label>
-                                        <input type="date" class="form-control" id="incoming_date" name="incoming_date" t-att-value="today or ''" data-required="1" />
-                                        <div class="invalid-feedback" id="incoming_date_error">This field is required.</div>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                                        <label class="form-label required" for="delivery_last_date">Delivery Last Time</label>
-                                        <input type="datetime-local" class="form-control" id="delivery_last_date" name="delivery_last_date" data-required="1" />
-                                        <div class="invalid-feedback" id="delivery_last_date_error">This field is required.</div>
-                                    </div>
-
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                                        <label for="deadline" class="form-label">Deadline</label>
-                                        <div class="form-control">
-                                            <div id="remaining_time"></div>
+                            <div class="order-details p-3 p-md-4 rounded shadow-sm mt-4" style="background: #FAFAFA;">
+                                <h1 class="h5 mb-4">Order Details</h1>
+                                <form>
+                                    <div class="row mb-3">
+                                        <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
+                                            <label for="platform_source_id">Platform Source</label>
+                                            <select class="form-control" name="platform_source_id" id="platform_source_id">
+                                                <option value="">Select Source...</option>
+                                                <t t-foreach="mediums" t-as="medium">
+                                                    <option t-att-value="medium.id">
+                                                        <t t-esc="medium.name" />
+                                                    </option>
+                                                </t>
+                                            </select>
+                                            <span class="error-message" id="platform_source_id_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="form-group col-12 col-md-6">
+                                            <label for="order_source_id">Order Source</label>
+                                            <select class="form-control" name="order_source_id" id="order_source_id">
+                                                <option value="">Select Source...</option>
+                                                <t t-foreach="sources" t-as="source">
+                                                    <option t-att-value="source.id">
+                                                        <t t-esc="source.name" />
+                                                    </option>
+                                                </t>
+                                            </select>
+                                            <span class="error-message" id="order_source_id_error" style="color: red; display: none;">This field is required.</span>
                                         </div>
                                     </div>
 
-                                    <div class="col-12 col-md-4">
-                                        <label class="form-label required" for="amount">Amount</label>
-                                        <input type="number" class="form-control" placeholder="" id="amount" name="amount" data-required="1" />
-                                        <div class="invalid-feedback" id="amount_error">This field is required.</div>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                                        <label class="form-label" for="percentage">Percentage</label>
-                                        <select class="form-select form-control" id="percentage" name="percentage">
-                                            <option value="">Select Percentage...</option>
-                                            <option value="0">0</option>
-                                            <option value="3">3</option>
-                                            <option value="5">5</option>
-                                            <option value="10">10</option>
-                                            <option value="20">20</option>
-                                        </select>
-                                        <div class="invalid-feedback" id="percentage_error">This field is required.</div>
-                                    </div>
-
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0">
-                                        <label class="form-label" for="charges_amount">Charges Amount</label>
-                                        <input type="number" class="form-control" placeholder="" id="charges_amount" name="charges_amount" />
+                                    <div class="row mb-3">
+                                        <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
+                                            <label for="profile_id">Profile Name</label>
+                                            <select class="form-control" name="profile_id" id="profile_id">
+                                                <option value="">Select Profile...</option>
+                                                <t t-foreach="profiles" t-as="profile">
+                                                    <option t-att-value="profile.id">
+                                                        <t t-esc="profile.name" />
+                                                    </option>
+                                                </t>
+                                            </select>
+                                            <span class="error-message" id="profile_id_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="col-form-label" for="partner_id">Client Name</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control search-input" data-model="res.partner" placeholder="Search partner..." id="partner_id" name="partner_id" autocomplete="off" required="1" />
+                                                <div class="search-results position-absolute w-100 bg-white shadow-sm border rounded-bottom mt-12" style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                                            </div>
+                                            <span class="error-message" id="partner_id_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
                                     </div>
 
-                                    <div class="col-12 col-md-4">
-                                        <label for="delivery_amount" class="form-label">Delivery Amount</label>
-                                        <input type="text" class="form-control" id="delivery_amount" name="delivery_amount" />
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="special_remarks">Special Remarks</label>
-                                    <textarea class="form-control" placeholder="Tell us about your use case..." rows="3" id="special_remarks" name="special_remarks"></textarea>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <label class="form-label" for="crm_tag_ids">Tags</label>
-                                        <select class="form-control" name="crm_tag_ids" id="crm_tag_ids" data-placeholder="Select tags">
-                                            <option value="">Select Tag...</option>
-                                            <t t-foreach="tags" t-as="tag">
-                                                <option t-att-value="tag.id"><t t-esc="tag.name" /></option>
-                                            </t>
-                                        </select>
-                                        <div class="invalid-feedback" id="crm_tag_ids_error">This field is required.</div>
+                                    <div class="row mb-3">
+                                        <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
+                                            <label for="partner_email">Client Email</label>
+                                            <input type="email" class="form-control" id="partner_email" />
+                                        </div>
+                                        <div class="form-group col-12 col-md-6 mb-3 mb-md-0">
+                                            <label for="partner_phone">Client Phone</label>
+                                            <input type="text" class="form-control" id="partner_phone" />
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <a href="/customer/form">
+                                                <button type="button" class="btn btn-dark">+ Add New Customer
+                                                </button>
+                                            </a>
+                                        </div>
                                     </div>
 
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label required" for="order_status">Order Status</label>
-                                        <select class="form-select form-control" id="order_status" name="order_status" data-required="1">
-                                            <option value="">Select Order Status...</option>
-                                            <option value="nra">NRA</option>
-                                            <option value="wip">WIP</option>
-                                            <option value="delivered">Delivered</option>
-                                            <option value="complete">Complete</option>
-                                            <option value="cancelled">Cancelled</option>
-                                            <option value="revisions">Revisions</option>
-                                            <option value="issues">Issues</option>
-                                        </select>
-                                        <div class="invalid-feedback" id="order_status_error">This field is required.</div>
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label" for="order_number">Order Number</label>
+                                            <input type="text" class="form-control" placeholder="" for="order_number" id="order_number" required="1" />
+                                            <span class="error-message" id="order_number_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="form-group col-12 col-md-4 mb-3 mb-md-0">
+                                            <label for="team_id">Assign Team</label>
+                                            <select class="form-control" name="team_id" id="team_id">
+                                                <option value="">Select Team...</option>
+                                                <t t-foreach="team_id" t-as="team">
+                                                    <option t-att-value="team.id">
+                                                        <t t-esc="team.name" />
+                                                    </option>
+                                                </t>
+                                            </select>
+                                            <!-- <span class="error-message" id="team_id_error" style="color: red; display: none;">This field is required.</span> -->
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label" for="order_link">Order Link</label>
+                                            <input type="url" class="form-control" placeholder="" id="order_link" />
+                                            <span class="error-message" id="order_link_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <!-- Submit Button -->
-                                <div class="mt-4 mb-4">
-                                    <button type="button" id="btn_sbmt" class="btn btn-dark w-100">Submit</button>
-                                </div>
-                            </form>
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label" for="instruction_sheet_link">Instruction Sheet Link</label>
+                                            <input type="url" class="form-control" placeholder="" id="instruction_sheet_link" />
+                                            <span class="error-message" id="instruction_sheet_link_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="form-group col-12 col-md-4 mb-3 mb-md-0">
+                                            <label for="product_id">Service Type</label>
+                                            <select class="form-control" name="product_id" id="product_id" required="1">
+                                                <option value="">Select Service Type...</option>
+                                                <t t-foreach="products" t-as="product">
+                                                    <option t-att-value="product.id">
+                                                        <t t-esc="product.name" />
+                                                    </option>
+                                                </t>
+                                            </select>
+                                            <span class="error-message" id="product_id_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label" for="incoming_date">Incoming Date</label>
+                                            <input type="date" class="form-control" id="incoming_date" t-att-value="today or ''" required="1" />
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label" for="delivery_last_date">Delivery Last Time</label>
+                                            <input type="datetime-local" class="form-control" id="delivery_last_date" required="1" />
+                                            <span class="error-message" id="delivery_last_date_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                            <label for="deadline">Deadline</label>
+                                            <div class="form-control">
+                                                <div id="remaining_time"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label class="form-label" for="amount">Amount</label>
+                                            <input type="number" class="form-control" placeholder="" id="amount" required="1" />
+                                            <span class="error-message" id="amount_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label" for="percentage">Percentage</label>
+                                            <select class="form-select form-control" id="percentage">
+                                                <option value="">Select Percentage...</option>
+                                                <option value="0">0</option>
+                                                <option value="3">3</option>
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="20">20</option>
+                                            </select>
+                                            <span class="error-message" id="percentage_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0">
+                                            <label class="form-label" for="charges_amount">Charges Amount</label>
+                                            <input type="number" class="form-control" placeholder="" id="charges_amount" />
+                                        </div>
+                                        <div class="col-12 col-md-4">
+                                            <label for="delivery_amount">Delivery Amount</label>
+                                            <input type="text" class="form-control" id="delivery_amount" />
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label" for="special_remarks">Special Remarks</label>
+                                        <textarea class="form-control" placeholder="Tell us about your use case..." rows="3" id="special_remarks"></textarea>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                            <label class="form-label" for="crm_tag_ids">Tags</label>
+                                            <select class="form-control" name="crm_tag_ids" id="crm_tag_ids" data-placeholder="Select tags">
+                                                <option value="">Select Tag...</option>
+                                                <t t-foreach="tags" t-as="tag">
+                                                    <option t-att-value="tag.id">
+                                                        <t t-esc="tag.name" />
+                                                    </option>
+                                                </t>
+                                            </select>
+                                            <span class="error-message" id="crm_tag_ids_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label" for="order_status">Order Status</label>
+                                            <select class="form-select form-control" id="order_status" required="1">
+                                                <option value="">Select Order Status...</option>
+                                                <option value="nra">NRA</option>
+                                                <option value="wip">WIP</option>
+                                                <option value="delivered">Delivered</option>
+                                                <option value="complete">Complete</option>
+                                                <option value="cancelled">Cancelled</option>
+                                                <option value="revisions">Revisions</option>
+                                                <option value="issues">Issues</option>
+                                            </select>
+                                            <span class="error-message" id="order_status_error" style="color: red; display: none;">This field is required.</span>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="mt-4 mb-4">
+                                <button type="submit" id="btn_sbmt" class="btn btn-dark w-100">Submit</button>
+                            </div>
                         </div>
-
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Sidebar toggle -->
-        <script type="text/javascript">
+            <!-- JavaScript for responsive sidebar -->
+            <script type="text/javascript">
             function toggleSidebar() {
-                var sidebar = document.getElementById('sidebar');
-                var overlay = document.getElementById('sidebarOverlay');
-                sidebar.classList.toggle('active');
-                if (overlay.style.display === "none" || overlay.style.display === "") {
-                    overlay.style.display = "block";
-                    overlay.classList.add('active');
-                } else {
-                    overlay.style.display = "none";
-                    overlay.classList.remove('active');
-                }
+                document.getElementById('sidebar').classList.toggle('active');
+                document.getElementById('sidebarOverlay').classList.toggle('active');
                 const logo = document.getElementById('logoContainer');
                 if (logo.style.display === "none") {
                     logo.style.display = "block";
                 } else {
                     logo.style.display = "none";
                 }
-            }
-        </script>
-
-        <!-- Portal-like validation script -->
-        <script type="text/javascript">
-            (function () {
-                'use strict';
-
-                // Utility: show error for field
-                function showError(field, msgEl) {
-                    if (!field) return;
-                    field.classList.add('is-invalid');
-                    if (msgEl) { msgEl.classList.add('show'); }
                 }
-                function hideError(field, msgEl) {
-                    if (!field) return;
-                    field.classList.remove('is-invalid');
-                    if (msgEl) { msgEl.classList.remove('show'); }
-                }
-
-                // Validate a single field by element
-                function validateFieldByElement(field) {
-                    if (!field) { return true; }
-                    var required = field.getAttribute('data-required') === '1' || field.hasAttribute('required');
-                    var id = field.id;
-                    var errEl = document.getElementById(id + '_error');
-
-                    // For inputs: check trimmed value
-                    if (required) {
-                        var value = (field.value || '').toString().trim();
-                        if (value === '') {
-                            showError(field, errEl);
-                            return false;
-                        } else {
-                            hideError(field, errEl);
-                            return true;
-                        }
-                    } else {
-                        hideError(field, errEl);
-                        return true;
-                    }
-                }
-
-                // Validate whole form
-                function validateForm(form) {
-                    var valid = true;
-                    var requiredElems = form.querySelectorAll('[data-required="1"], [required]');
-                    requiredElems.forEach(function (el) {
-                        var ok = validateFieldByElement(el);
-                        if (!ok) { valid = false; }
-                    });
-                    return valid;
-                }
-
-                // Hook up button
-                document.getElementById('btn_sbmt').addEventListener('click', function (e) {
-                    e.preventDefault();
-                    var form = document.getElementById('sale_form');
-
-                    // First pass: validate
-                    var ok = validateForm(form);
-
-                    // Extra: if partner search uses typeahead, ensure it has a value
-                    var partner = document.getElementById('partner_id');
-                    if (partner) {
-                        if ((partner.value || '').trim() === '') {
-                            showError(partner, document.getElementById('partner_id_error'));
-                            ok = false;
-                        }
-                    }
-
-                    if (!ok) {
-                        // Focus first invalid field (like Odoo)
-                        var firstInvalid = form.querySelector('.is-invalid');
-                        if (firstInvalid) { firstInvalid.focus(); }
-                        return false;
-                    }
-
-                    // No client-side errors — submit the form.
-                    // If you use an AJAX handler, replace submitPortalForm() with your AJAX call.
-                    submitPortalForm(form);
-                });
-
-                function submitPortalForm(form) {
-                    // show a spinner or disable button if you want
-                    var btn = document.getElementById('btn_sbmt');
-                    btn.disabled = true;
-                    btn.innerHTML = 'Submitting...';
-
-                    // Default behavior: normal POST
-                    // This will submit the form to the controller at action="/portal/sale/create"
-                    // If you want to use fetch/AJAX, replace this line with your AJAX call.
-                    try {
-                        form.submit();
-                    } catch (err) {
-                        console.error('Form submit failed', err);
-                        btn.disabled = false;
-                        btn.innerHTML = 'Submit';
-                        alert('An error occurred while submitting the form. Please try again.');
-                    }
-                }
-
-                // Real-time validation: remove error on input/change
-                document.addEventListener('input', function (ev) {
-                    var target = ev.target;
-                    if (target && (target.getAttribute('data-required') === '1' || target.hasAttribute('required'))) {
-                        validateFieldByElement(target);
-                    }
-                }, true);
-
-                document.addEventListener('change', function (ev) {
-                    var target = ev.target;
-                    if (target && (target.getAttribute('data-required') === '1' || target.hasAttribute('required'))) {
-                        validateFieldByElement(target);
-                    }
-                }, true);
-
-                // Optional: populate remaining time when delivery_last_date changes
-                var deliveryField = document.getElementById('delivery_last_date');
-                var remainingDiv = document.getElementById('remaining_time');
-                if (deliveryField && remainingDiv) {
-                    function updateRemaining() {
-                        try {
-                            var val = deliveryField.value;
-                            if (!val) { remainingDiv.innerText = ''; return; }
-                            var then = new Date(val);
-                            var now = new Date();
-                            var diff = then - now;
-                            if (diff <= 0) {
-                                remainingDiv.innerText = 'Past due';
-                                return;
-                            }
-                            var days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                            var hrs = Math.floor((diff / (1000 * 60 * 60)) % 24);
-                            var mins = Math.floor((diff / (1000 * 60)) % 60);
-                            var str = (days ? days + 'd ' : '') + (hrs ? hrs + 'h ' : '') + (mins ? mins + 'm' : '');
-                            remainingDiv.innerText = 'Remaining: ' + str;
-                        } catch (err) {
-                            remainingDiv.innerText = '';
-                        }
-                    }
-                    deliveryField.addEventListener('change', updateRemaining);
-                    deliveryField.addEventListener('input', updateRemaining);
-                }
-
-            })();
-        </script>
-    </t>
-</template>
+            </script>
+        </t>
+    </template>
 
 
 
